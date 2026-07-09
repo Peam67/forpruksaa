@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#ffb3c6">
+<title>จดหมายรัก 💌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Bai+Jamjuree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; overflow:hidden; }
+  body{
+    font-family:'Bai Jamjuree',sans-serif;
+    background:linear-gradient(160deg,#ffd6e0 0%,#ffc2d4 40%,#ffb3c6 100%);
+    display:flex; align-items:center; justify-content:center;
+    min-height:100dvh; position:relative; user-select:none;
+  }
+
+  /* floating background hearts */
+  .bg-heart{ position:absolute; bottom:-40px; opacity:0; animation:floatUp linear infinite; pointer-events:none; }
+  @keyframes floatUp{
+    0%{ transform:translateY(0) rotate(0deg); opacity:0; }
+    10%{ opacity:.7; } 90%{ opacity:.5; }
+    100%{ transform:translateY(-110vh) rotate(360deg); opacity:0; }
+  }
+
+  .stage{ position:relative; width:min(88vw,360px); height:min(88vw,360px); max-height:70dvh; display:flex; align-items:center; justify-content:center; }
+
+  /* ============ COVER / LOCK ============ */
+  .cover{
+    position:fixed; inset:0; z-index:50;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+    padding:24px; transition:opacity .6s ease, transform .6s ease;
+  }
+  .cover.hide{ opacity:0; transform:scale(1.08); pointer-events:none; }
+
+  .cover-pic{
+    width:118px; height:118px; object-fit:cover; border-radius:18px;
+    transform:rotate(-7deg);
+    border:4px solid #fff;
+    box-shadow:0 12px 26px rgba(200,60,100,.35);
+  }
+  .cover-pic.broken{ display:none; }
+
+  .cover-title{ font-size:clamp(17px,5vw,20px); font-weight:600; color:#c94670; text-align:center; }
+  .cover-sub{ font-size:13px; color:#d98aa5; margin-top:-12px; }
+
+  .pw{
+    width:min(70vw,230px); text-align:center; letter-spacing:8px;
+    font-family:'Bai Jamjuree'; font-size:20px; font-weight:600; color:#c94670;
+    padding:12px 16px; border-radius:40px; border:2px solid rgba(255,120,150,.5);
+    background:rgba(255,255,255,.7); outline:none; transition:border-color .2s;
+  }
+  .pw:focus{ border-color:#ff5c85; background:#fff; }
+  .pw.shake{ animation:shake .4s; border-color:#e23b5f; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-9px);} 40%,80%{transform:translateX(9px);} }
+
+  .unlock{
+    background:linear-gradient(120deg,#ff7a9c,#ff5c85); color:#fff; border:none;
+    padding:12px 34px; border-radius:40px; font-family:'Bai Jamjuree'; font-size:15px; font-weight:600;
+    cursor:pointer; box-shadow:0 8px 18px rgba(255,90,120,.45); transition:transform .15s;
+  }
+  .unlock:active{ transform:scale(.93); }
+  .pw-err{ font-size:13px; color:#e23b5f; height:16px; }
+
+  /* ============ ENVELOPE ============ */
+  .envwrap{ position:relative; width:100%; opacity:0; pointer-events:none; transition:opacity .6s ease .1s; }
+  .envwrap.ready{ opacity:1; pointer-events:auto; }
+
+  .envelope{
+    position:relative; width:100%; aspect-ratio:1.5/1; cursor:pointer;
+    transition:transform .5s ease; filter:drop-shadow(0 16px 26px rgba(200,60,100,.32));
+    perspective:900px;
+  }
+  .envelope.open{ pointer-events:none; }
+  .envelope.gone{ transform:translateY(40px) scale(.85); opacity:0; transition:all .8s ease .2s; }
+
+  /* back panel */
+  .env-back{ position:absolute; inset:0; border-radius:14px; background:linear-gradient(150deg,#ff9fb6,#ff7a9c); z-index:1; }
+
+  /* letter that slides up */
+  .letter-mini{ position:absolute; left:7%; right:7%; top:8%; height:70%; background:#fff8fb; border-radius:8px 8px 6px 6px; z-index:2; transition:transform .6s cubic-bezier(.4,-.2,.3,1.4); box-shadow:0 -2px 8px rgba(0,0,0,.08); display:flex; align-items:center; justify-content:center; padding:10px; text-align:center; }
+  .letter-mini span{ font-family:'Charm',cursive; color:#ff6f92; font-size:clamp(18px,6vw,26px); font-weight:700; opacity:0; transition:opacity .4s .3s; }
+  .envelope.open .letter-mini{ transform:translateY(-48%); z-index:4; }
+  .envelope.open .letter-mini span{ opacity:1; }
+
+  /* front cover: whole envelope minus the top triangle notch (where flap sits) */
+  .env-front{ position:absolute; inset:0; z-index:3; border-radius:14px;
+    background:linear-gradient(160deg,#ff87a4,#ff6f92);
+    clip-path:polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 50% 52%);
+    box-shadow:inset 0 -2px 8px rgba(180,40,80,.15); }
+
+  /* top flap that flips down/open */
+  .flap{ position:absolute; top:0; left:0; width:100%; height:52%; z-index:5;
+    background:linear-gradient(160deg,#ffa2b8,#ff8098);
+    clip-path:polygon(0 0, 100% 0, 50% 100%);
+    transform-origin:top; transform:rotateX(0deg);
+    transition:transform .55s ease, background .5s; border-radius:14px 14px 0 0;
+    filter:drop-shadow(0 4px 3px rgba(180,40,80,.12)); backface-visibility:hidden; }
+  .envelope.open .flap{ transform:rotateX(180deg); z-index:0; background:linear-gradient(160deg,#ff8098,#ff6f92); }
+
+  .seal{ position:absolute; top:47%; left:50%; transform:translate(-50%,-50%); width:50px; height:50px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#ff5c85,#d63a63); z-index:6; display:flex; align-items:center; justify-content:center; font-size:23px; box-shadow:0 4px 10px rgba(180,30,70,.5); transition:opacity .3s, transform .3s; animation:pulse 1.6s ease-in-out infinite; }
+  .envelope.open .seal{ opacity:0; transform:translate(-50%,-50%) scale(0); }
+  @keyframes pulse{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.12);} }
+
+  .tap-hint{ position:absolute; bottom:-46px; left:0; right:0; text-align:center; color:#c94670; font-size:15px; font-weight:500; animation:bob 1.5s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(6px);} }
+
+  /* ============ OPENED CARD ============ */
+  .card{
+    position:absolute; inset:0; margin:auto;
+    width:min(90vw,380px); height:max-content; max-height:88dvh;
+    background:linear-gradient(180deg,#fffafc,#fff0f5);
+    border-radius:26px; padding:34px 26px 30px;
+    box-shadow:0 25px 60px rgba(200,40,90,.35);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    opacity:0; transform:scale(.6) translateY(30px); pointer-events:none;
+    transition:opacity .6s ease, transform .6s cubic-bezier(.2,.8,.3,1.3);
+    border:2px solid rgba(255,140,170,.4);
+  }
+  .card.show{ opacity:1; transform:scale(1) translateY(0); pointer-events:auto; }
+
+  .bigphrase{
+    font-family:'Bai Jamjuree',sans-serif; font-weight:700;
+    font-size:clamp(24px,7.5vw,32px); line-height:1.35; text-align:center;
+    color:#ff4f7e;
+  }
+  .bigphrase .hb{ display:inline-block; animation:beat 1.2s ease-in-out infinite; }
+  @keyframes beat{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.25);} }
+
+  .reveal-pic{
+    width:150px; height:150px; object-fit:cover; border-radius:16px;
+    transform:rotate(4deg); border:4px solid #fff;
+    box-shadow:0 12px 26px rgba(200,60,100,.3);
+  }
+  .reveal-pic.broken{ display:none; }
+
+  .eng{
+    font-family:'Bai Jamjuree',sans-serif; font-style:italic; font-weight:500;
+    font-size:clamp(14px,4.2vw,16px); color:#b56a86; text-align:center; line-height:1.6;
+    max-width:320px;
+  }
+
+  .again{ background:linear-gradient(120deg,#ff7a9c,#ff5c85); color:#fff; border:none; padding:12px 30px; border-radius:40px; font-family:'Bai Jamjuree'; font-size:15px; font-weight:600; cursor:pointer; box-shadow:0 8px 18px rgba(255,90,120,.45); transition:transform .15s; }
+  .again:active{ transform:scale(.93); }
+
+  .burst{ position:fixed; font-size:26px; pointer-events:none; z-index:99; will-change:transform,opacity; }
+</style>
+</head>
+<body>
+
+<!-- ===== COVER (password) ===== -->
+<div class="cover" id="cover">
+  <img class="cover-pic" id="coverPic" src="images/cover.jpg" alt="" onerror="this.classList.add('broken')">
+  <div class="cover-title">ใส่รหัสผ่านถ้าอยากรู้ 🔒</div>
+  <input class="pw" id="pw" type="password" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="off">
+  <button class="unlock" id="unlock">ปลดล็อก 💗</button>
+  <div class="pw-err" id="pwErr"></div>
+</div>
+
+<!-- ===== ENVELOPE + CARD ===== -->
+<div class="stage">
+  <div class="envwrap" id="envwrap">
+    <div class="envelope" id="env">
+      <div class="env-back"></div>
+      <div class="letter-mini"><span>เปิดอ่านสิ 💗</span></div>
+      <div class="env-front"></div>
+      <div class="flap"></div>
+      <div class="seal">💌</div>
+    </div>
+    <div class="tap-hint" id="hint">แตะเพื่อเปิดจดหมาย 👆</div>
+  </div>
+
+  <div class="card" id="card">
+    <div class="bigphrase">เพราะพฤกษาน่ารักงัย <span class="hb">❤️</span></div>
+    <img class="reveal-pic" id="revealPic" src="images/reveal.jpg" alt="" onerror="this.classList.add('broken')">
+    <div class="eng">i know i shouldn't still like you<br>but i do</div>
+    <button class="again" id="again">ปิดจดหมาย 💌</button>
+  </div>
+</div>
+
+<script>
+  const hearts=['💗','💕','🌸','💖','🩷','💝'];
+  for(let i=0;i<14;i++){
+    const h=document.createElement('div');
+    h.className='bg-heart'; h.textContent=hearts[i%hearts.length];
+    h.style.left=Math.random()*100+'vw';
+    h.style.fontSize=(14+Math.random()*20)+'px';
+    h.style.animationDuration=(7+Math.random()*8)+'s';
+    h.style.animationDelay=(Math.random()*8)+'s';
+    document.body.appendChild(h);
+  }
+
+  const cover=document.getElementById('cover');
+  const pw=document.getElementById('pw');
+  const unlock=document.getElementById('unlock');
+  const pwErr=document.getElementById('pwErr');
+  const envwrap=document.getElementById('envwrap');
+  const env=document.getElementById('env');
+  const card=document.getElementById('card');
+  const hint=document.getElementById('hint');
+  const again=document.getElementById('again');
+  const PASSWORD='130123';
+  let opened=false;
+
+  function tryUnlock(){
+    if(pw.value===PASSWORD){
+      pwErr.textContent='';
+      cover.classList.add('hide');
+      setTimeout(()=>{ cover.style.display='none'; envwrap.classList.add('ready'); },500);
+    }else{
+      pw.classList.add('shake');
+      pwErr.textContent='เลขส่งไปในดิสนะค้าบคนสวย ❤️';
+      setTimeout(()=>pw.classList.remove('shake'),400);
+      pw.select();
+    }
+  }
+  unlock.addEventListener('click',tryUnlock);
+  pw.addEventListener('keydown',e=>{ if(e.key==='Enter') tryUnlock(); });
+
+  function burstHearts(){
+    for(let i=0;i<18;i++){
+      const b=document.createElement('div'); b.className='burst';
+      b.textContent=hearts[Math.floor(Math.random()*hearts.length)];
+      b.style.left='50%'; b.style.top='50%'; document.body.appendChild(b);
+      const ang=Math.random()*Math.PI*2, dist=120+Math.random()*160;
+      const x=Math.cos(ang)*dist, y=Math.sin(ang)*dist;
+      b.animate([
+        {transform:'translate(-50%,-50%) scale(.4)',opacity:1},
+        {transform:`translate(${x-50}%,${y-50}%) scale(1.3)`,opacity:0}
+      ],{duration:900+Math.random()*500,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>b.remove();
+    }
+  }
+
+  function open(){
+    if(opened) return; opened=true;
+    env.classList.add('open'); hint.style.opacity='0'; burstHearts();
+    setTimeout(()=>env.classList.add('gone'),900);
+    setTimeout(()=>card.classList.add('show'),1000);
+  }
+  function close(){
+    opened=false; card.classList.remove('show');
+    env.classList.remove('open','gone'); hint.style.opacity='1';
+  }
+  env.addEventListener('click',open);
+  again.addEventListener('click',close);
+</script>
+</body>
+</html>
